@@ -65,7 +65,7 @@ class GraspConfig:
     # Approximate grasp radius factor (relative to object bounding sphere)
     grasp_radius_factor: float = 1.2
     # Angular spread of fingers (radians)
-    finger_spread: float = np.pi / 6  # 30 degrees total spread for 4 fingers
+    finger_spread: float = np.pi / 3  # 60 degrees total spread for 4 fingers
     # Noise on contact ray directions (set to 0.0 for deterministic keypoints)
     ray_noise_std: float = 0.0
 

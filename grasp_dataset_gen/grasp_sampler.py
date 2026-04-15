@@ -281,11 +281,24 @@ class GraspSampler:
                     4
                 )
                 offset = angle_offsets[idx]
-                # Rotation axis = cam_up for horizontal spread
+                # 1. Horizontal spread (rotate around cam_up)
                 rot_mat = trimesh.transformations.rotation_matrix(
                     offset, cam_up
                 )[:3, :3]
                 approach_dir = rot_mat @ base_dir
+
+                # 2. Vertical staggering (add an 'arch' to the hand)
+                # Slightly tilt down for ring (+2 deg) and pinky (+5 deg)
+                stagger_map = {"index": 0.0, "middle": 0.0, "ring": 0.04, "pinky": 0.09}
+                stagger_angle = stagger_map.get(finger_label, 0.0)
+                
+                # Rotate around camera right axis to tilt up/down
+                cam_right = cam_pose[:3, 0]
+                tilt_mat = trimesh.transformations.rotation_matrix(
+                    stagger_angle, cam_right
+                )[:3, :3]
+                approach_dir = tilt_mat @ approach_dir
+                
                 approach_dir /= np.linalg.norm(approach_dir)
             else:
                 approach_dir = base_dir.copy()
