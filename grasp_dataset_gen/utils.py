@@ -174,3 +174,34 @@ def overlay_contacts_on_image(
         )
 
     return img
+
+
+def export_scene_to_glb(mesh: trimesh.Trimesh, contacts: List[ContactPoint]) -> bytes:
+    """
+    Merge the mesh with colored spheres for contacts and return GLB as bytes.
+    Useful for 3D preview in Streamlit/web using model-viewer.
+    """
+    scene = trimesh.Scene()
+    
+    # Original mesh with subtle transparency
+    m = mesh.copy()
+    m.visual.face_colors = [180, 180, 190, 180]
+    scene.add_geometry(m)
+    
+    for contact in contacts:
+        color = FINGER_COLORS.get(contact.finger, (200, 200, 200))
+        # Smaller spheres for 3D view
+        sphere = trimesh.creation.uv_sphere(radius=0.002, count=[10, 10])
+        sphere.apply_translation(contact.position)
+        sphere.visual.face_colors = list(color) + [255]
+        scene.add_geometry(sphere)
+        
+        # Add normal vector as a tiny stick
+        if np.linalg.norm(contact.normal) > 1e-6:
+            n_start = contact.position
+            n_end = n_start + np.array(contact.normal) * 0.015
+            stick = trimesh.creation.cylinder(radius=0.0005, segment=[n_start, n_end])
+            stick.visual.face_colors = [255, 255, 255, 200]
+            scene.add_geometry(stick)
+
+    return scene.export(file_type='glb')

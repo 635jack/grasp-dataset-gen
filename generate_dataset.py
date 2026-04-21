@@ -52,10 +52,8 @@ Examples:
                         default=["front_back", "left_right", "right_left"],
                         choices=["front_back", "left_right", "right_left"],
                         help="Grasp strategies to generate")
-    parser.add_argument("--points_per_finger", type=int, default=1,
-                        help="Contact points per finger (default: 1)")
-    parser.add_argument("--points_palm", type=int, default=1,
-                        help="Contact points for palm (default: 1)")
+    parser.add_argument("--radius_factor", type=float, default=1.2,
+                        help="Virtual cylinder radius factor vs bounding sphere (default: 1.2)")
     return parser.parse_args()
 
 
@@ -70,9 +68,8 @@ def main():
 
     strategies = [GraspStrategy(s) for s in args.strategies]
     grasp = GraspConfig(
-        points_per_finger=args.points_per_finger,
-        points_palm=args.points_palm,
         strategies=strategies,
+        grasp_radius_factor=args.radius_factor,
     )
 
     config = DatasetConfig(

@@ -13,6 +13,7 @@ from typing import Optional
 from .config import DatasetConfig, GraspStrategy
 from .renderer import MeshRenderer
 from .grasp_sampler import GraspSampler
+from .visibility import classify_visibility, calculate_surface_visibility
 from .utils import (
     load_glb, normalize_mesh,
     save_contacts_json, save_contacts_npz,
@@ -78,15 +79,20 @@ def generate_dataset(config: Optional[DatasetConfig] = None):
         mesh = load_glb(glb_path)
         mesh = normalize_mesh(mesh)
 
-        # 2. Render RGB image
+        # 2. Render RGB image and Depth map
         rgb_path = os.path.join(out_dir, "rgb.png")
-        print(f"  📷 Rendering RGB image...")
-        color_image = renderer.render(mesh, output_path=rgb_path)
+        print(f"  📷 Rendering images...")
+        color_image, depth_map = renderer.render(mesh, output_path=rgb_path)
+
+        # 2b. Object surface visibility
+        import numpy as np
+        surface_vis = calculate_surface_visibility(mesh, config.camera, depth_map)
 
         # 3. Generate grasp contacts for each strategy
         entry = {
             "mesh": mesh_name,
             "rgb": rgb_path,
+            "surface_visibility": float(surface_vis),
             "grasps": {},
             "n_vertices": len(mesh.vertices),
             "n_faces": len(mesh.faces),
@@ -96,6 +102,13 @@ def generate_dataset(config: Optional[DatasetConfig] = None):
         for strategy in config.grasp.strategies:
             print(f"  🖐️  Sampling grasp: {strategy.value}...")
             contacts = sampler.sample(mesh, strategy)
+            
+            # Visibility Analysis
+            pts = np.array([c.position for c in contacts])
+            nls = np.array([c.normal for c in contacts])
+            v_statuses = classify_visibility(pts, nls, config.camera, depth_map)
+            for c, status in zip(contacts, v_statuses):
+                c.visibility = status
 
             strategy_name = strategy.value
 

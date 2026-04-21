@@ -91,20 +91,21 @@ class MeshRenderer:
         self.close()
 
     def render(self, mesh: trimesh.Trimesh,
-               output_path: Optional[str] = None) -> np.ndarray:
+               output_path: Optional[str] = None) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Render the mesh and return the RGB image as a numpy array.
+        Render the mesh and return the RGB and Depth images as numpy arrays.
         
         Parameters
         ----------
         mesh : trimesh.Trimesh
             The 3D mesh to render.
         output_path : str, optional
-            If provided, save the image to this path.
+            If provided, save the color image to this path.
             
         Returns
         -------
         color : np.ndarray of shape (H, W, 3), dtype uint8
+        depth : np.ndarray of shape (H, W), dtype float32 (values in meters)
         """
         scene = pyrender.Scene(
             bg_color=self.bg_color,
@@ -112,7 +113,6 @@ class MeshRenderer:
         )
 
         # Add mesh
-        # Give a uniform material if none exists
         material = pyrender.MetallicRoughnessMaterial(
             baseColorFactor=[0.6, 0.6, 0.7, 1.0],
             metallicFactor=0.1,
@@ -136,35 +136,23 @@ class MeshRenderer:
         scene.add(cam, pose=cam_pose)
 
         # Lighting: 3-point setup
-        # Key light (front-left-top)
         key_pose = build_camera_pose((-0.5, -0.5, 0.8), (0, 0, 0), (0, 0, 1))
-        key_light = pyrender.DirectionalLight(
-            color=[1.0, 0.97, 0.95],
-            intensity=self.light_intensity
-        )
+        key_light = pyrender.DirectionalLight(color=[1.0, 0.97, 0.95], intensity=self.light_intensity)
         scene.add(key_light, pose=key_pose)
 
-        # Fill light (front-right, dimmer)
         fill_pose = build_camera_pose((0.6, -0.3, 0.3), (0, 0, 0), (0, 0, 1))
-        fill_light = pyrender.DirectionalLight(
-            color=[0.95, 0.95, 1.0],
-            intensity=self.light_intensity * 0.5
-        )
+        fill_light = pyrender.DirectionalLight(color=[0.95, 0.95, 1.0], intensity=self.light_intensity * 0.5)
         scene.add(fill_light, pose=fill_pose)
 
-        # Rim light (back-top)
         rim_pose = build_camera_pose((0.0, 0.5, 0.6), (0, 0, 0), (0, 0, 1))
-        rim_light = pyrender.DirectionalLight(
-            color=[1.0, 1.0, 1.0],
-            intensity=self.light_intensity * 0.4
-        )
+        rim_light = pyrender.DirectionalLight(color=[1.0, 1.0, 1.0], intensity=self.light_intensity * 0.4)
         scene.add(rim_light, pose=rim_pose)
 
         # Render using the persistent off-screen renderer
-        color, _ = self._renderer.render(scene)
+        color, depth = self._renderer.render(scene)
 
         if output_path is not None:
             os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
             Image.fromarray(color).save(output_path)
 
-        return color
+        return color, depth

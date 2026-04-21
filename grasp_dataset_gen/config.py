@@ -51,23 +51,20 @@ class CameraConfig:
 
 @dataclass
 class GraspConfig:
-    """Configuration for grasp point generation."""
-    # Number of contact points per finger (set to 1 for precise keypoints)
-    points_per_finger: int = 1
-    # Number of palm contact points
-    points_palm: int = 1
+    """
+    Configuration for grasp point generation.
+
+    Finger placement is now handled by a cylinder model with fixed anatomical
+    angles — no need for spread or noise parameters.
+    """
     # Grasp strategies to generate
     strategies: List[GraspStrategy] = field(default_factory=lambda: [
         GraspStrategy.FRONT_BACK,
         GraspStrategy.LEFT_RIGHT,
         GraspStrategy.RIGHT_LEFT,
     ])
-    # Approximate grasp radius factor (relative to object bounding sphere)
+    # Scale factor for the virtual cylinder radius (relative to bounding sphere)
     grasp_radius_factor: float = 1.2
-    # Angular spread of fingers (radians)
-    finger_spread: float = np.pi / 3  # 60 degrees total spread for 4 fingers
-    # Noise on contact ray directions (set to 0.0 for deterministic keypoints)
-    ray_noise_std: float = 0.0
 
 
 @dataclass
