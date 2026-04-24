@@ -6,3 +6,4 @@ scipy>=1.11.0
 PyYAML>=6.0
 pyglet<2.0
 tqdm>=4.65
+streamlit>=1.30.0

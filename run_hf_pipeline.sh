@@ -18,7 +18,7 @@ $VENV_PYTHON scripts/download_objaverse.py
 # 2. Generate Dataset
 echo "2/4 ⚙️  Generating synthetic grasp data (renders, contacts, visibility)..."
 # We exclude existing data/glb to focus on the new ones
-$VENV_PYTHON generate_dataset.py --glb_dir $GLB_DIR --output_dir $OUTPUT_DIR --strategies front_back
+$VENV_PYTHON generate_dataset.py --glb_dir $GLB_DIR --output_dir $OUTPUT_DIR
 
 # 3. Export to CSV and LaTeX
 echo "3/4 📊 Finalizing exports..."

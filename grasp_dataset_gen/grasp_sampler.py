@@ -94,24 +94,37 @@ def _project_perp(v: np.ndarray, axis: np.ndarray) -> Optional[np.ndarray]:
 
 def _mesh_principal_axis(mesh: trimesh.Trimesh) -> np.ndarray:
     """
-    Find the principal axis (longest dimension) of the mesh via PCA on vertices.
+    Find the GRASP axis for the mesh via PCA on vertices.
 
-    The returned axis is oriented so that it has a non-negative component
-    along the world Z axis (or positive Y if Z ≈ 0).  This gives a consistent
-    'upward' direction regardless of mesh orientation.
+    The grasp axis is the axis that the fingers wrap AROUND (the elongation axis
+    of the object). For a bottle, this is Z (up). For a screwdriver lying on its
+    side, this would be horizontal.
+
+    IMPORTANT: When the principal axis is nearly parallel to world-Z (vertical
+    object), we keep it as-is since finger rays fire perpendicular to it and will
+    correctly hit the lateral surface. When it is nearly horizontal, we also keep it.
+
+    The returned axis is oriented consistently upward for tangent stability.
     """
     verts = mesh.vertices - mesh.centroid
     cov = np.cov(verts.T)
     eigenvalues, eigenvectors = np.linalg.eigh(cov)
-    # Largest eigenvector = principal axis (elongation direction)
-    axis = eigenvectors[:, np.argmax(eigenvalues)]
+
+    # Sort by eigenvalue descending: largest = most elongated axis
+    order = np.argsort(eigenvalues)[::-1]
+    eigenvalues = eigenvalues[order]
+    eigenvectors = eigenvectors[:, order]
+
+    # The grasp axis = elongation axis (fingers wrap around it)
+    axis = eigenvectors[:, 0].copy()
     axis = axis / np.linalg.norm(axis)
 
-    # Orient toward positive Z (if cylinder is vertical) or positive Y
+    # Orient consistently: prefer positive Z, then positive Y
     if axis[2] < -0.1:
         axis = -axis
     elif abs(axis[2]) < 0.1 and axis[1] < 0:
         axis = -axis
+
     return axis
 
 
@@ -252,11 +265,14 @@ class GraspSampler:
         for finger_label in FINGER_LABELS:
             approach_dir = approach_dirs[finger_label]
 
-            # Palm is positioned lower along the principal axis
-            # to simulate the base of the hand below the fingertips
+            # All fingers fire from the CENTER of the object along the grasp axis
+            # (centroid height), not the extremities.
+            # Only the palm is shifted slightly downward to simulate
+            # the base of the hand sitting below the fingertip cluster.
             origin_offset = np.zeros(3)
             if finger_label == "palm":
-                origin_offset = -grasp_axis * half_length * 0.45
+                # Shift palm 30% of half-height downward (less aggressive than before)
+                origin_offset = -grasp_axis * half_length * 0.30
 
             result = _cast_ray_to_surface(
                 mesh, origin_offset, approach_dir, ray_radius
