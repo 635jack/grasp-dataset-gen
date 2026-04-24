@@ -2,6 +2,8 @@
 
 Génération de datasets de préhension à partir d'objets 3D (GLB).
 
+🎥 **[Vidéo de démonstration](https://youtu.be/RPjh99p6JNQ)** | 🤗 **[Dataset Hugging Face](https://huggingface.co/datasets/jack635/grasp-dataset-curated)**
+
 Pour chaque objet, le pipeline produit :
 - **Image RGB monoculaire** : rendu depuis un point de vue fixé
 - **Points de contact de préhension** sur la surface 3D, chacun contenant :
@@ -96,6 +98,15 @@ python generate_dataset.py \
 python visualize_3d.py \
   --glb data/glb/mon_objet.glb \
   --contacts output/mon_objet/grasp_front_back.json
+```
+
+### 🎈 Inspecteur de Dataset (Streamlit)
+
+Pour explorer l'ensemble du dataset généré (rendus 2D, modèles 3D avec normales/tangentes, métadonnées), utilisez l'outil interactif :
+
+```bash
+# Lance l'application web d'inspection
+PYTHONPATH=. ./venv/bin/streamlit run scripts/view_dataset.py
 ```
 
 ## 📊 Format des données
