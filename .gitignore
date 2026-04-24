@@ -4,7 +4,8 @@ __pycache__/
 venv/
 .venv/
 output/
-data/glb/*.glb
+output_hf/
+data/
 *.png
 *.jpg
 *.npz

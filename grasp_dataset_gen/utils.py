@@ -166,12 +166,28 @@ def overlay_contacts_on_image(
     for px, contact in zip(pixels, contacts):
         u, v = int(px[0]), int(px[1])
         color = FINGER_COLORS.get(contact.finger, (200, 200, 200))
+        
+        # Base circle
         draw.ellipse(
             [u - dot_radius, v - dot_radius,
              u + dot_radius, v + dot_radius],
             fill=color,
             outline=(255, 255, 255),
         )
+
+        # Draw a cross for occluded points
+        if contact.visibility and "OCCLUDED" in contact.visibility:
+            d = dot_radius - 1
+            draw.line([u - d, v - d, u + d, v + d], fill=(255, 255, 255), width=1)
+            draw.line([u - d, v + d, u + d, v - d], fill=(255, 255, 255), width=1)
+        
+        # Optional: Add a second outline for silhouette points to make them pop
+        elif contact.visibility == "SILHOUETTE":
+            draw.ellipse(
+                [u - dot_radius - 1, v - dot_radius - 1,
+                 u + dot_radius + 1, v + dot_radius + 1],
+                outline=(255, 255, 255),
+            )
 
     return img
 

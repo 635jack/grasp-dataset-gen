@@ -53,4 +53,10 @@ def export_dataset_to_csv(index_path, csv_output_path):
     print(f"✅ Dataset exported to {csv_output_path} ({len(all_rows)} rows)")
 
 if __name__ == "__main__":
-    export_dataset_to_csv("output/dataset_index.json", "output/grasp_dataset.csv")
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--index", default="output/dataset_index.json", help="Path to input JSON index")
+    parser.add_argument("--output", default="output/grasp_dataset.csv", help="Path to output CSV")
+    args = parser.parse_args()
+    
+    export_dataset_to_csv(args.index, args.output)
